@@ -14,7 +14,7 @@ ip:port/cougarAPI/<b>[db name]</b>/dropdatabase
 
 **POST**
 
-Parameters [db name]
+Parameters 
 
 ip:port/cougarAPI/<b>[db name]</b>/createcollection/<b>[collection name]</b>
 
