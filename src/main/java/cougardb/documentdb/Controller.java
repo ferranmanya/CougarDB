@@ -9,7 +9,7 @@ public class Controller {
         
         public void CreateCollection(String CollectionName) throws CollectionAlreadyExistsException, IOException {
             // 0.BUSCAR SI EXISTE YA EL CollectionName EN EL FICHERO METADATA  --El caso de error se lanzaria un CollectionAlreadyExistsException
-                //Dejo el stream abierto ya que escribire en metadata.json al final del metodo
+            //Dejo el stream abierto ya que escribire en metadata.json al final del metodo
             
             Gson gson = new Gson();
 
@@ -30,6 +30,20 @@ public class Controller {
             os.writeObject(data);
             fos.close();
             os.close();
+        }
+
+        public void dropCollection(String CollectionName) throws FileNotFoundException
+        {
+            File f = new File(CollectionName+".cdb");
+            if(!f.exists())
+            {
+                throw new FileNotFoundException(CollectionName + ".cdb does not exist.");
+            }
+            else
+            {
+                f.delete();
+                // BORRAR el objeto CougarCollection en el fichero METADATA
+            }
         }
 
 }
