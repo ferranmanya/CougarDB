@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,9 +19,23 @@ public class APIController {
     @PostMapping("/collections")
     public ResponseEntity<?> createCollection(@RequestBody Map<String, Object> collectionData){
         Map<String, Object> response = new HashMap<>();
+        String nom = collectionData.get("name").toString();
         response.put("message", "Collection saved successfully");
-        response.put("collection", collectionData);
-        return new ResponseEntity<Map<String,Object>>(response, HttpStatus.CREATED);
+        response.put("collection", nom);
+        Controller c = new Controller();
+        try{
+            c.CreateCollection(nom);
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.CREATED);
+        }
+        catch (CollectionAlreadyExistsException e)
+        {
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+
+        }
+        catch (IOException e)
+        {
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // TODO: Show data from the collection.
@@ -32,9 +48,22 @@ public class APIController {
 
     // TODO: Delete the collection and send a response.
     @DeleteMapping("/collections/{collectionName}")
-    public ResponseEntity<?> dropCollection(@PathVariable String collectionName){
+    public ResponseEntity<?> dropCollection(@PathVariable String collectionName) {
         Map<String, Object> response = new HashMap<>();
         response.put("collectionName", collectionName);
-        return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
+        Controller c = new Controller();
+        try{
+            c.dropCollection(collectionName);
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
+
+        }
+        catch (FileNotFoundException e)
+        {
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+        }
+        catch (IOException e)
+        {
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

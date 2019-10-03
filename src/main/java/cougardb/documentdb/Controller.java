@@ -25,10 +25,6 @@ public class Controller {
         gson.toJson(collections, new FileWriter(METADATA));
     }
 
-            String pathname = CollectionName + ".cdb";
-            java.util.Date date = new Date();
-            CougarCollection newCollection = new CougarCollection(CollectionName, date, new File(pathname));
-
     private ArrayList<CougarCollection> readMetadata() throws FileNotFoundException {
         Gson gson = new Gson();
         Type collectionList = new TypeToken<ArrayList<CougarCollection>>(){}.getType();
@@ -43,18 +39,20 @@ public class Controller {
         os.close();
     }
 
-        public void dropCollection(String CollectionName) throws FileNotFoundException
+    public void dropCollection(String CollectionName) throws IOException
+    {
+        File f = new File(CollectionName+".cdb");
+        if(!f.exists())
         {
-            File f = new File(CollectionName+".cdb");
-            if(!f.exists())
-            {
-                throw new FileNotFoundException(CollectionName + ".cdb does not exist.");
-            }
-            else
-            {
-                f.delete();
-                // BORRAR el objeto CougarCollection en el fichero METADATA
-            }
+            throw new FileNotFoundException(CollectionName + ".cdb does not exist.");
         }
+        else
+        {
+            f.delete();
+            ArrayList<CougarCollection> metadata = readMetadata();
+            metadata.remove(new CougarCollection(CollectionName));
+            writeMetadata(metadata);
+        }
+    }
 
 }
