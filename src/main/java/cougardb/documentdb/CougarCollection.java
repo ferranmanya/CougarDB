@@ -14,6 +14,12 @@ public class CougarCollection {
         this.path = path;
     }
 
+    public CougarCollection(String collectionName) {
+        this.CollectionName = collectionName;
+        this.creationDate = new Date();
+        this.path = new File(collectionName + ".cdb");
+    }
+
     public String getCollectionName() {
         return CollectionName;
     }
@@ -43,6 +49,10 @@ public class CougarCollection {
         return "{" + "\"Name\" : \"" + this.CollectionName + "\","
                 + "CreationDate : \"" + this.creationDate.toString() +"\"," 
                 + "FilePath : \"" + this.path.toString() + "\"}";
+    }
+
+    public boolean equals(CougarCollection cougarCollection){
+        return cougarCollection.getCollectionName().equals(this.CollectionName);
     }
     
 
