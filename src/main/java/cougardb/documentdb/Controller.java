@@ -40,4 +40,20 @@ public class Controller {
         os.close();
     }
 
+    public void dropCollection(String CollectionName) throws IOException
+    {
+        File f = new File(CollectionName+".cdb");
+        if(!f.exists())
+        {
+            throw new FileNotFoundException(CollectionName + ".cdb does not exist.");
+        }
+        else
+        {
+            f.delete();
+            ArrayList<CougarCollection> metadata = readMetadata();
+            metadata.remove(new CougarCollection(CollectionName));
+            writeMetadata(metadata);
+        }
+    }
+
 }
