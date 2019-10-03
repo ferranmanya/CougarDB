@@ -25,7 +25,6 @@ public class Controller {
         gson.toJson(collections, new FileWriter(METADATA));
     }
 
-
     private ArrayList<CougarCollection> readMetadata() throws FileNotFoundException {
         Gson gson = new Gson();
         Type collectionList = new TypeToken<ArrayList<CougarCollection>>(){}.getType();
