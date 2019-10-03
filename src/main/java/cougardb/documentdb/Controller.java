@@ -25,7 +25,6 @@ public class Controller {
         gson.toJson(collections, new FileWriter(METADATA));
     }
 
-
     private ArrayList<CougarCollection> readMetadata() throws FileNotFoundException {
         Gson gson = new Gson();
         Type collectionList = new TypeToken<ArrayList<CougarCollection>>(){}.getType();
@@ -38,6 +37,22 @@ public class Controller {
         os.writeObject(data);
         fos.close();
         os.close();
+    }
+
+    public void dropCollection(String CollectionName) throws IOException
+    {
+        File f = new File(CollectionName+".cdb");
+        if(!f.exists())
+        {
+            throw new FileNotFoundException(CollectionName + ".cdb does not exist.");
+        }
+        else
+        {
+            f.delete();
+            ArrayList<CougarCollection> metadata = readMetadata();
+            metadata.remove(new CougarCollection(CollectionName));
+            writeMetadata(metadata);
+        }
     }
 
 }
