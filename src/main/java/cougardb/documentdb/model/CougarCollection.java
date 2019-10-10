@@ -28,7 +28,7 @@ public class CougarCollection {
     }
 
     public void restoreBlocks(){
-        this.blocks = new ArrayList<>();
+        //this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
             block.restoreData();
@@ -36,7 +36,7 @@ public class CougarCollection {
         }
     }
 
-    public void putData(Map<String, Object> data){
+    public boolean putData(Map<String, Object> data){
 
         restoreBlocks();
         try {
@@ -46,14 +46,17 @@ public class CougarCollection {
             if(result.isPresent()){
                 CollectionBlock block = result.get();
                 block.putData(data);
+                return false;
             }else{
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
                 blocks.add(block);
+                return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
 
     }

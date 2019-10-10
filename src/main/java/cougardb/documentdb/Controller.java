@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cougardb.documentdb.exceptions.CollectionAlreadyExistsException;
 import cougardb.documentdb.exceptions.CollectionDoesNotExist;
+import cougardb.documentdb.model.CollectionBlock;
 import cougardb.documentdb.model.CougarCollection;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class Controller {
@@ -94,7 +97,12 @@ public class Controller {
     }
 
     public void putCollectionData(String collectionName, Map<String, Object> data) throws  CollectionDoesNotExist {
-        getCollection(collectionName).putData(data);
+        //getCollection(collectionName).putData(data);
+        CougarCollection collection = getCollection(collectionName);
+        collection.putData(data);
+        List<CougarCollection> list =  readMetadata();
+        // actualizr collection
+        writeMetadata(list);
     }
 
     private CougarCollection getCollection(String collectionName) throws CollectionDoesNotExist {
