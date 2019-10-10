@@ -1,6 +1,7 @@
 package cougardb.documentdb;
 
 import cougardb.documentdb.exceptions.CollectionAlreadyExistsException;
+import cougardb.documentdb.exceptions.CollectionDoesNotExist;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +48,7 @@ public class APIController {
         try {
             Controller.getInstance().putCollectionData(collectionName, data);
             response.put("message", "The data has been saved in the collection.");
-        } catch (FileNotFoundException e) {
+        } catch ( CollectionDoesNotExist e) {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
         }
@@ -59,7 +60,7 @@ public class APIController {
         Map<String, Object> response = new HashMap<>();
         try {
             return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getCollectionData(collectionName), HttpStatus.OK);
-        } catch (FileNotFoundException e) {
+        } catch ( CollectionDoesNotExist e) {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
         }
@@ -73,7 +74,7 @@ public class APIController {
             response.put("message", "Collection deleted.");
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
         }
-        catch (FileNotFoundException e)
+        catch ( CollectionDoesNotExist e)
         {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);

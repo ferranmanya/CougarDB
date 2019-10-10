@@ -3,13 +3,11 @@ package cougardb.documentdb;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cougardb.documentdb.exceptions.CollectionAlreadyExistsException;
-import cougardb.documentdb.model.CollectionBlock;
+import cougardb.documentdb.exceptions.CollectionDoesNotExist;
 import cougardb.documentdb.model.CougarCollection;
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
 import java.util.*;
 
 public class Controller {
@@ -58,21 +56,16 @@ public class Controller {
     private synchronized void writeCollection(CougarCollection newCollection) throws CollectionAlreadyExistsException {
         List<CougarCollection> collections = readMetadata();
         if (collections.contains(newCollection)) throw new CollectionAlreadyExistsException("Collection " +newCollection.getCollectionName()+" already exists.");
-        //try {
-            //this.mapper.writeValue(new File(newCollection.getBlocks().get(0).getFile().toString()), newCollection);
-            collections.add(newCollection);
-            writeMetadata(collections);
-        //} catch (IOException e) {
-        //    e.printStackTrace();
-        //}
+        collections.add(newCollection);
+        writeMetadata(collections);
+
     }
 
-    public void dropCollection(String collectionName) throws FileNotFoundException
-    {
+    public void dropCollection(String collectionName) throws  CollectionDoesNotExist {
         List<CougarCollection> collections = readMetadata();
         Optional<CougarCollection> result = collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
-            throw new FileNotFoundException(collectionName + " does not exist.");
+             throw new CollectionDoesNotExist("Collection with name " +collectionName+" does not exist.");
         }
         CougarCollection collection = result.get();
         collection.restoreBlocks();
@@ -83,7 +76,7 @@ public class Controller {
         writeMetadata(collections);
     }
 
-    public Map<String, Object> getCollectionData(String collectionName) throws FileNotFoundException {
+    public Map<String, Object> getCollectionData(String collectionName) throws CollectionDoesNotExist {
         CougarCollection collection = getCollection(collectionName);
         try {
             String json = this.mapper.writeValueAsString(collection);
@@ -100,14 +93,14 @@ public class Controller {
         }
     }
 
-    public void putCollectionData(String collectionName, Map<String, Object> data) throws FileNotFoundException{
+    public void putCollectionData(String collectionName, Map<String, Object> data) throws  CollectionDoesNotExist {
         getCollection(collectionName).putData(data);
     }
 
-    private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
+    private CougarCollection getCollection(String collectionName) throws CollectionDoesNotExist {
         Optional<CougarCollection> result = readMetadata().stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
-            throw new FileNotFoundException(collectionName + " does not exist.");
+            throw new CollectionDoesNotExist("Collection with name " +collectionName+" does not exist.");
         }
         return result.get();
     }

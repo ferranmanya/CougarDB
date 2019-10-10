@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@JsonIgnoreProperties(value = { "mapper" })
+@JsonIgnoreProperties(value = { "mapper", "file" })
 public class CollectionBlock {
 
     private int id;
@@ -31,7 +31,16 @@ public class CollectionBlock {
         this.collectionName = collectionName;
         this.creationDate = new Date();
         this.maxFileSize = maxFileSize;
-        this.file = new File(collectionName+"."+id+".cdb");
+
+
+        File directory = new File("data");
+        if (! directory.exists()){
+            directory.mkdir();
+            // If you require it to make the entire directory path including parents,
+            // use directory.mkdirs(); here instead.
+        }
+
+        this.file = new File("data/"+collectionName+"."+id+".cdb");
     }
 
     public void restoreData(){
