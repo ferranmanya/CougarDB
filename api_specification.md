@@ -23,3 +23,10 @@ DELETE /cougarAPI/collections/<collection name>
 Host: localhost:8080
 Content-Type: application/json
 ```
+
+#### Get Document
+```
+GET /cougarAPI/collections/<collection name>/<document id>/
+Host: localhost:8080
+Content-Type: application/json
+```
