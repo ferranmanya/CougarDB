@@ -37,7 +37,7 @@ public class CougarCollection {
     }
 
     public void putData(Map<String, Object> data){
-
+        data.put("id", UUID.randomUUID());
         restoreBlocks();
         try {
             String json = this.mapper.writeValueAsString(data);

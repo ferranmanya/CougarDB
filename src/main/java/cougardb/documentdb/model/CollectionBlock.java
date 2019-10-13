@@ -8,10 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonIgnoreProperties(value = { "mapper" })
 public class CollectionBlock {
@@ -115,5 +112,14 @@ public class CollectionBlock {
     public int hashCode() {
         String name = collectionName+""+id;
         return name.hashCode();
+    }
+
+    public Optional<Map<String, Object>> getDocumentByID(String id) {
+        for (Map<String, Object> document : this.data) {
+            if (document.get("id").equals(id)) {
+                return Optional.of(document);
+            }
+        }
+        return Optional.empty();
     }
 }

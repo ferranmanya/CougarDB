@@ -73,10 +73,21 @@ public class APIController {
             response.put("message", "Collection deleted.");
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
         }
-        catch (FileNotFoundException e)
-        {
+        catch (FileNotFoundException e) {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @GetMapping("/collections/{collectionName}/{documentID}")
+    public ResponseEntity<?> getDocument(@PathVariable String collectionName, @PathVariable String documentID){
+        Map<String, Object> response = new HashMap<>();
+        try {
+            return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getDocumentByID(collectionName, documentID), HttpStatus.OK);
+        } catch (FileNotFoundException e) {
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }

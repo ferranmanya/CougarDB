@@ -111,4 +111,16 @@ public class Controller {
         }
         return result.get();
     }
+
+    public Map<String,Object> getDocumentByID(String collectionName, String id) throws FileNotFoundException {
+        CougarCollection collection = getCollection(collectionName);
+        collection.restoreBlocks();
+        for (CollectionBlock block : collection.getBlocks()) {
+            Optional<Map<String, Object>> o = block.getDocumentByID(id);
+            if (o.isPresent())
+                return o.get();
+        }
+        throw new FileNotFoundException();
+    }
+
 }
