@@ -23,3 +23,22 @@ DELETE /cougarAPI/collections/<collection name>
 Host: localhost:8080
 Content-Type: application/json
 ```
+#### Insert Document
+```
+POST /cougarAPI/collections/<collection name> 
+Host: localhost:8080
+Content-Type: application/json
+Accept: application/json
+
+{
+    "field": "value",
+    ...
+}
+```
+
+#### Get Document
+```
+GET /cougarAPI/collections/<collection name>/<document id>/
+Host: localhost:8080
+Content-Type: application/json
+```
