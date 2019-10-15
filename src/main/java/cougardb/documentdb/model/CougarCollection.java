@@ -27,35 +27,39 @@ public class CougarCollection {
         this.maxFileSize = 1.;
     }
 
-    public void restoreBlocks(){
+    public void readFileBlocks(boolean readData){
         this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
-            block.restoreData();
+            if(readData){
+                block.readData();
+            }
             blocks.add(block);
         }
     }
 
-    public void putData(Map<String, Object> data){
+    public boolean putData(Map<String, Object> data){
         data.put("id", UUID.randomUUID());
-        restoreBlocks();
+        readFileBlocks(false);
         try {
             String json = this.mapper.writeValueAsString(data);
             final int dataLength = json.getBytes(StandardCharsets.UTF_8).length;
             Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
             if(result.isPresent()){
                 CollectionBlock block = result.get();
+                block.readData();
                 block.putData(data);
             }else{
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
                 blocks.add(block);
+                return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        return false;
     }
 
     private void writeToFile(File file, String json){

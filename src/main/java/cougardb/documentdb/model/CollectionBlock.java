@@ -31,7 +31,7 @@ public class CollectionBlock {
         this.file = new File(collectionName+"."+id+".cdb");
     }
 
-    public void restoreData(){
+    public void readData(){
         try {
             if(this.file.exists()){
                 byte[] jsonData = Files.readAllBytes(Paths.get(this.file.getPath()));

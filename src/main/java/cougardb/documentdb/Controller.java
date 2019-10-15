@@ -17,9 +17,11 @@ public class Controller {
     private static final String METADATA = "metadata.json";
     private ObjectMapper mapper;
     private static Controller instance = null;
+    private List<CougarCollection> collections;
 
     protected Controller() {
         this.mapper = new ObjectMapper();
+        this.collections = readMetadata();
     }
 
     public static Controller getInstance() {
@@ -38,9 +40,9 @@ public class Controller {
         writeCollection(new CougarCollection(CollectionName));
     }
 
-    private synchronized void writeMetadata(List<CougarCollection> collections) {
+    private synchronized void writeMetadata() {
         try {
-            this.mapper.writeValue(new File(METADATA), collections);
+            this.mapper.writeValue(new File(METADATA), this.collections);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -56,31 +58,24 @@ public class Controller {
     }
 
     private synchronized void writeCollection(CougarCollection newCollection) throws CollectionAlreadyExistsException {
-        List<CougarCollection> collections = readMetadata();
-        if (collections.contains(newCollection)) throw new CollectionAlreadyExistsException("Collection " +newCollection.getCollectionName()+" already exists.");
-        //try {
-            //this.mapper.writeValue(new File(newCollection.getBlocks().get(0).getFile().toString()), newCollection);
-            collections.add(newCollection);
-            writeMetadata(collections);
-        //} catch (IOException e) {
-        //    e.printStackTrace();
-        //}
+        if (this.collections.contains(newCollection)) throw new CollectionAlreadyExistsException("Collection " +newCollection.getCollectionName()+" already exists.");
+        this.collections.add(newCollection);
+        writeMetadata();
     }
 
     public void dropCollection(String collectionName) throws FileNotFoundException
     {
-        List<CougarCollection> collections = readMetadata();
-        Optional<CougarCollection> result = collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
+        Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
         }
         CougarCollection collection = result.get();
-        collection.restoreBlocks();
+        collection.readFileBlocks(false);
         collection.getBlocks().forEach(block -> {
             block.getFile().delete();
         });
-        collections.remove(collection);
-        writeMetadata(collections);
+        this.collections.remove(collection);
+        writeMetadata();
     }
 
     public Map<String, Object> getCollectionData(String collectionName) throws FileNotFoundException {
@@ -88,7 +83,7 @@ public class Controller {
         try {
             String json = this.mapper.writeValueAsString(collection);
             Map<String, Object> collectionMap = this.mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
-            collection.restoreBlocks();
+            collection.readFileBlocks(true);
 
             json = this.mapper.writeValueAsString(collection.getBlocks());
             List<Map<String, Object>> blockList = this.mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
@@ -101,11 +96,13 @@ public class Controller {
     }
 
     public void putCollectionData(String collectionName, Map<String, Object> data) throws FileNotFoundException{
-        getCollection(collectionName).putData(data);
+        if(getCollection(collectionName).putData(data)){
+            writeMetadata();
+        }
     }
 
     private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
-        Optional<CougarCollection> result = readMetadata().stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
+        Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
         }
@@ -114,8 +111,9 @@ public class Controller {
 
     public Map<String,Object> getDocumentByID(String collectionName, String id) throws FileNotFoundException {
         CougarCollection collection = getCollection(collectionName);
-        collection.restoreBlocks();
+        collection.readFileBlocks(false);
         for (CollectionBlock block : collection.getBlocks()) {
+            block.readData();
             Optional<Map<String, Object>> o = block.getDocumentByID(id);
             if (o.isPresent())
                 return o.get();
