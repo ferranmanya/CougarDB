@@ -121,4 +121,35 @@ public class Controller {
         throw new FileNotFoundException();
     }
 
+    /*
+    public void dropCollection(String collectionName) throws FileNotFoundException
+    {
+        Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
+        if (result.isEmpty()){
+            throw new FileNotFoundException(collectionName + " does not exist.");
+        }
+        CougarCollection collection = result.get();
+        collection.readFileBlocks(false);
+        collection.getBlocks().forEach(block -> {
+            block.getFile().delete();
+        });
+        this.collections.remove(collection);
+        writeMetadata();
+    }
+
+     */
+
+    public void deleteDocument(String collectionName, String documentID) throws FileNotFoundException
+    {
+        CougarCollection collection = getCollection(collectionName);
+        collection.readFileBlocks(false);
+        for (CollectionBlock block : collection.getBlocks()) {
+            block.readData();
+            Optional<Map<String, Object>> o = block.getDocumentByID(documentID);
+            if (o.isPresent())
+                block.deleteDocumentByID(documentID);
+
+        }
+    }
+
 }
