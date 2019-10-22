@@ -122,4 +122,20 @@ public class CollectionBlock {
         }
         return Optional.empty();
     }
+
+
+    public void deleteDocumentByID(String id){
+        for (Map<String, Object> document : this.data) {
+            if (document.get("id").equals(id)) {
+                this.data.remove(document);
+                break;
+            }
+        }
+        try {
+            this.mapper.writeValue(this.file, this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
