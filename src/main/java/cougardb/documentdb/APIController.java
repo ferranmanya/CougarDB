@@ -102,6 +102,20 @@ public class APIController {
         }
     }
 
+    @PostMapping("/collections/{collectionName}/{documentID}")
+    public ResponseEntity<?> updateDocument(@PathVariable String collectionName, @PathVariable String documentID, @RequestBody Map<String, Object> data) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Controller.getInstance().deleteDocument(collectionName, documentID);
+            Controller.getInstance().putCollectionData(collectionName, data);
+            response.put("message", "The data has been saved in the collection.");
+            return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getCollectionData(collectionName), HttpStatus.OK);
+        } catch (FileNotFoundException e) {
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
 
 }
