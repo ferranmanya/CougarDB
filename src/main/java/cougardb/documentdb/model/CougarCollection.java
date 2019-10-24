@@ -38,8 +38,13 @@ public class CougarCollection {
         }
     }
 
-    public boolean putData(Map<String, Object> data){
-        data.put("id", UUID.randomUUID());
+    public boolean putData(Map<String, Object> data, String id){
+        if(id.length() != 0){
+            data.put("id", id);
+        }
+        else{
+            data.put("id", UUID.randomUUID());
+        }
         readFileBlocks(false);
         try {
             String json = this.mapper.writeValueAsString(data);
