@@ -96,10 +96,18 @@ public class Controller {
     }
 
     public void putCollectionData(String collectionName, Map<String, Object> data) throws FileNotFoundException{
-        if(getCollection(collectionName).putData(data)){
+        if(getCollection(collectionName).putData(data, "")){
             writeMetadata();
         }
     }
+
+    public void updateDocumentByID(String collectionName, Map<String, Object> data, String id) throws FileNotFoundException {
+        deleteDocument(collectionName, id);
+        if(getCollection(collectionName).putData(data, id)){
+            writeMetadata();
+        }
+    }
+
 
     private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
