@@ -91,11 +91,12 @@ public class APIController {
     }
 
     @DeleteMapping("/collections/{collectionName}/{documentID}")
-    public ResponseEntity<?> deleteDocument(@PathVariable String collectionName, @PathVariable String documentID) {
+    public ResponseEntity<?> deleteDocument(@PathVariable String collectionName, @PathVariable String documentID){
         Map<String, Object> response = new HashMap<>();
         try {
             Controller.getInstance().deleteDocument(collectionName, documentID);
-            return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getCollectionData(collectionName), HttpStatus.OK);
+            response.put("message", "Document deleted.");
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.OK);
         } catch (FileNotFoundException e) {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);

@@ -115,27 +115,21 @@ public class CollectionBlock {
     }
 
     public Optional<Map<String, Object>> getDocumentByID(String id) {
-        for (Map<String, Object> document : this.data) {
-            if (document.get("id").equals(id)) {
-                return Optional.of(document);
-            }
-        }
-        return Optional.empty();
+        return this.data.stream().filter(doc -> doc.get("id").equals(id)).findFirst();
     }
 
-
-    public void deleteDocumentByID(String id){
-        for (Map<String, Object> document : this.data) {
-            if (document.get("id").equals(id)) {
-                this.data.remove(document);
-                break;
-            }
-        }
+    public boolean deleteDocumentById(String id){
         try {
-            this.mapper.writeValue(this.file, this);
+            Optional<Map<String, Object>> result = this.data.stream().filter(doc -> doc.get("id").equals(id)).findFirst();
+            if(result.isPresent()){
+                this.data.remove(result.get());
+                this.mapper.writeValue(this.file, this);
+                return true;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
 }
