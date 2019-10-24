@@ -109,7 +109,7 @@ public class APIController {
         try {
             Controller.getInstance().updateDocumentByID(collectionName, data, documentID);
             response.put("message", "The data has been saved in the collection.");
-            return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getCollectionData(collectionName), HttpStatus.OK);
+            return new ResponseEntity<Map<String,Object>>(Controller.getInstance().getDocumentByID(collectionName, documentID), HttpStatus.OK);
         } catch (FileNotFoundException e) {
             response.put("error", e.getMessage());
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
