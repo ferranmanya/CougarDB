@@ -1,11 +1,44 @@
-## Create Collection
+#### Create Collection
+```
+POST /cougarAPI/collections/ 
+Host: localhost:8080
+Content-Type: application/json
+Accept: application/json
 
-**POST**
+{
+    "name": "collection name",
+    ...
+}
+```
+#### Get Collection
+```
+GET /cougarAPI/collections/<collection name>
+Host: localhost:8080
+Content-Type: application/json
+```
 
-ip:port/cougarAPI/createcollection/<b>[collection name]</b>
+#### Drop Collection
+```
+DELETE /cougarAPI/collections/<collection name>
+Host: localhost:8080
+Content-Type: application/json
+```
+#### Insert Document
+```
+POST /cougarAPI/collections/<collection name> 
+Host: localhost:8080
+Content-Type: application/json
+Accept: application/json
 
-## Drop Collection
+{
+    "field": "value",
+    ...
+}
+```
 
-**DELETE** 
-
-ip:port/cougarAPI/<b>[collection name]</b>/dropcollection
+#### Get Document
+```
+GET /cougarAPI/collections/<collection name>/<document id>/
+Host: localhost:8080
+Content-Type: application/json
+```
