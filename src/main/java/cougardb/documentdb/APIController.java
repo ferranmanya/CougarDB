@@ -15,6 +15,12 @@ import java.util.Map;
 @RequestMapping("/cougarAPI")
 public class APIController {
 
+    private final Controller controller;
+
+    public APIController(Controller controller) {
+        this.controller = controller;
+    }
+
     @PostMapping("/collections")
     public ResponseEntity<?> createCollection(@RequestBody Map<String, Object> collectionData){
 
@@ -22,16 +28,18 @@ public class APIController {
         String name = "";
 
         if(collectionData.containsKey("name")){
+            // TODO passar string correcta com a nom
             name = (String)collectionData.get("name");
             response.put("collection", name);
         }else{
+            // TODO response amb classe personalitzada
             response.put("error", "The name field is required");
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
         }
 
         try
         {
-            Controller.getInstance().createCollection(name);
+            controller.createCollection(name);
             response.put("message", "Collection saved successfully");
             return new ResponseEntity<Map<String,Object>>(response, HttpStatus.CREATED);
         }

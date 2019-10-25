@@ -45,16 +45,17 @@ public class CougarCollection {
         else{
             data.put("id", UUID.randomUUID());
         }
-        readFileBlocks(false);
+        readFileBlocks(false); // load block list into memory
+        //TODO escriure sempre a l'última pàgina (opc. defragmentacio, repaginació whatevs)
         try {
-            String json = this.mapper.writeValueAsString(data);
-            final int dataLength = json.getBytes(StandardCharsets.UTF_8).length;
+            String json = this.mapper.writeValueAsString(data); // data to formatted json string
+            final int dataLength = json.getBytes(StandardCharsets.UTF_8).length; // calculate the length of data
             Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
-            if(result.isPresent()){
+            if(result.isPresent()){ // in case there is a block with enough available space, we insert it there
                 CollectionBlock block = result.get();
                 block.readData();
                 block.putData(data);
-            }else{
+            }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
