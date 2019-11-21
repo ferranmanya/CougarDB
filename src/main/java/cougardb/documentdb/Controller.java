@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cougardb.documentdb.exceptions.CollectionAlreadyExistsException;
 import cougardb.documentdb.model.CollectionBlock;
 import cougardb.documentdb.model.CougarCollection;
+import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -12,12 +13,13 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.*;
 
+@Service
 public class Controller {
 
     private static final String METADATA = "metadata.json";
     private ObjectMapper mapper;
     private static Controller instance = null;
-    private List<CougarCollection> collections;
+    private List<CougarCollection> collections; // TODO ajustar sincronització ó llista concurrent
 
     protected Controller() {
         this.mapper = new ObjectMapper();
@@ -57,10 +59,13 @@ public class Controller {
         }
     }
 
-    private synchronized void writeCollection(CougarCollection newCollection) throws CollectionAlreadyExistsException {
-        if (this.collections.contains(newCollection)) throw new CollectionAlreadyExistsException("Collection " +newCollection.getCollectionName()+" already exists.");
-        this.collections.add(newCollection);
-        writeMetadata();
+    private void writeCollection(CougarCollection newCollection) throws CollectionAlreadyExistsException {
+        synchronized (this) {
+            if (this.collections.contains(newCollection))
+                throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
+            this.collections.add(newCollection);
+            writeMetadata();
+        }
     }
 
     public void dropCollection(String collectionName) throws FileNotFoundException
@@ -71,9 +76,7 @@ public class Controller {
         }
         CougarCollection collection = result.get();
         collection.readFileBlocks(false);
-        collection.getBlocks().forEach(block -> {
-            block.getFile().delete();
-        });
+        collection.getBlocks().stream().map(CollectionBlock::getFile).forEach(File::delete);
         this.collections.remove(collection);
         writeMetadata();
     }
@@ -84,7 +87,8 @@ public class Controller {
             String json = this.mapper.writeValueAsString(collection);
             Map<String, Object> collectionMap = this.mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
             collection.readFileBlocks(true);
-
+            //TODO retornar tots els documents seguits, no en blocks
+            // package concurrent --> write vs read
             json = this.mapper.writeValueAsString(collection.getBlocks());
             List<Map<String, Object>> blockList = this.mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
             collectionMap.put("blocks", blockList);
