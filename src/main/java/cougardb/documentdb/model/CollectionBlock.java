@@ -43,11 +43,14 @@ public class CollectionBlock {
         }
     }
 
-    public void putData(Map<String, Object> json){
-        // TODO sincronitzat, map de <FILE, lock> de la pàgina
+    public void putData(Map<String, Object> document){
         try {
-            this.data.add(json);
-            this.mapper.writeValue(this.file, this);
+            synchronized (this) {
+                this.data.add(document);
+            }
+            synchronized (this) {
+                this.mapper.writeValue(this.file, this);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
