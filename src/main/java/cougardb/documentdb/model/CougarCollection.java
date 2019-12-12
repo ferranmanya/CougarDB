@@ -2,6 +2,7 @@ package cougardb.documentdb.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cougardb.documentdb.IndexManager;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ public class CougarCollection {
     private double maxFileSize; // kb
     private int currentId;
     private ObjectMapper mapper = new ObjectMapper();
+    private IndexManager indexManager;
 
     public CougarCollection(){}
 
@@ -25,6 +27,8 @@ public class CougarCollection {
         this.creationDate = new Date();
         this.currentId = 0;
         this.maxFileSize = 1.;
+        this.indexManager = new IndexManager(this.collectionName);
+
     }
 
     public void readFileBlocks(boolean readData){
@@ -39,11 +43,16 @@ public class CougarCollection {
     }
 
     public boolean putData(Map<String, Object> data, String id){
+
+        UUID final_id = UUID.randomUUID();
+
         if(id.length() != 0){
             data.put("id", id);
+            //final_id = 0;
         }
         else{
-            data.put("id", UUID.randomUUID());
+            // UUID aux = UUID.randomUUID();
+            data.put("id", final_id);
         }
         readFileBlocks(false); // load block list into memory
         //TODO escriure sempre a l'última pàgina (opc. defragmentacio, repaginació whatevs)
@@ -65,6 +74,11 @@ public class CougarCollection {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        String path = "./data/"+this.collectionName+"."+Integer.toString(this.currentId)+".cdb";
+        //index.put(final_id, path);
+        indexManager.addIndex(final_id, path);
+
         return false;
     }
 
@@ -128,5 +142,9 @@ public class CougarCollection {
 
     public int hashCode() {
         return collectionName.hashCode();
+    }
+
+    public IndexManager getIndexManager(){
+        return this.indexManager;
     }
 }

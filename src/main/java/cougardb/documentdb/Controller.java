@@ -136,12 +136,15 @@ public class Controller {
     public void deleteDocument(String collectionName, String id) throws FileNotFoundException {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
+        //collection.getIndexManager().deleteIndex(UUID.fromString(id));
         for (CollectionBlock block : collection.getBlocks()) {
             block.readData();
             if(block.deleteDocumentById(id)){
+                // y eliminamos del index el id
                 return;
             }
         }
+
         throw new FileNotFoundException("Document not found");
     }
 
