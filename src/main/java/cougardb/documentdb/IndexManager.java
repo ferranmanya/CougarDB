@@ -1,9 +1,14 @@
 package cougardb.documentdb;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.TreeMap;
 import java.util.UUID;
+import java.io.Serializable;
 
-public class IndexManager {
+
+@JsonIgnoreProperties(value = { "mapper", "blocks" })
+public class IndexManager implements Serializable{
 
     private TreeMap<UUID, Integer> index;
     private String collectionName;

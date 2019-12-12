@@ -64,7 +64,8 @@ public class Controller {
             if (this.collections.contains(newCollection))
                 throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
             this.collections.add(newCollection);
-            //writeMetadata();
+            System.out.println(newCollection.getCollectionName());
+            writeMetadata();
         }
     }
 
@@ -115,6 +116,9 @@ public class Controller {
 
     private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
+        for(CougarCollection c : this.collections){
+            System.out.println(c.getCollectionName());
+        }
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
         }
