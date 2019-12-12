@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -124,6 +125,20 @@ public class APIController {
         }
     }
 
+    @PostMapping("/collections/{collectionName}/search")
+    public ResponseEntity<?> searchCollection(@PathVariable String collectionName, @RequestBody Map<String, Object> queryData){
 
+        Map<String, Object> response = new HashMap<>();
+        try
+        {
+            List<Map<String, Object>> results = controller.searchData(collectionName, queryData);
+            response.put("results", results);
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.CREATED);
+        }
+        catch (FileNotFoundException e){
+            response.put("error", e.getMessage());
+            return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
 
 }

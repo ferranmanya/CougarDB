@@ -98,6 +98,21 @@ public class Controller {
         }
     }
 
+    public List<Map<String, Object>> searchData(String collectionName, Map<String, Object> query) throws FileNotFoundException {
+        CougarCollection collection = getCollection(collectionName);
+        try {
+            collection.readFileBlocks(true);
+            String blocks = this.mapper.writeValueAsString(collection.getBlocks());
+            String queryJson = this.mapper.writeValueAsString(query);
+            List<Map<String, Object>> blockList = new Query(queryJson, blocks).getResults();
+            return blockList;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     public void putCollectionData(String collectionName, Map<String, Object> data) throws FileNotFoundException{
         if(getCollection(collectionName).putData(data, "")){
             writeMetadata();
