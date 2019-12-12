@@ -106,14 +106,18 @@ public class Controller {
     }
 
     public void updateDocumentByID(String collectionName, Map<String, Object> data, String id) throws FileNotFoundException {
+        CougarCollection c = getCollection(collectionName);
+        c.getIndex().remove(UUID.fromString(id));
+
         deleteDocument(collectionName, id);
-        if(getCollection(collectionName).putData(data, id)){
+        if(c.putData(data, id)){
             writeMetadata();
         }
     }
 
 
     private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
+
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
@@ -124,24 +128,52 @@ public class Controller {
     public Map<String,Object> getDocumentByID(String collectionName, String id) throws FileNotFoundException {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
+
+        int idBlock = collection.getIndex().get(UUID.fromString(id));
+        if (idBlock >= collection.getBlocks().size())   throw new IndexOutOfBoundsException();
+
+        CollectionBlock block = collection.getCollectionBlockByID(idBlock);
+        block.readData();
+        Optional<Map<String, Object>> o = block.getDocumentByID(id);
+        if (o.isPresent()) {
+            return o.get();
+        }
+
+        /*
         for (CollectionBlock block : collection.getBlocks()) {
             block.readData();
             Optional<Map<String, Object>> o = block.getDocumentByID(id);
             if (o.isPresent())
                 return o.get();
         }
+        */
         throw new FileNotFoundException("Document not found");
     }
 
     public void deleteDocument(String collectionName, String id) throws FileNotFoundException {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
+
+        int idBlock = collection.getIndex().get(UUID.fromString(id));
+        if (idBlock >= collection.getBlocks().size())   throw new IndexOutOfBoundsException();
+
+        CollectionBlock block = collection.getCollectionBlockByID(idBlock);
+        block.readData();
+        if(block.deleteDocumentById(id)){
+            collection.getIndex().remove(UUID.fromString(id));
+            return;
+        }
+
+        /*
         for (CollectionBlock block : collection.getBlocks()) {
             block.readData();
             if(block.deleteDocumentById(id)){
+                // y eliminamos del index el id
                 return;
             }
         }
+        */
+
         throw new FileNotFoundException("Document not found");
     }
 
