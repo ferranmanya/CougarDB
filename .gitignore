@@ -4,3 +4,4 @@
 *.cdb
 metadata.json
 
+/documentdb.iml

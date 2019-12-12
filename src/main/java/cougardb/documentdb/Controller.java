@@ -64,7 +64,6 @@ public class Controller {
             if (this.collections.contains(newCollection))
                 throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
             this.collections.add(newCollection);
-            System.out.println(newCollection.getCollectionName());
             writeMetadata();
         }
     }
@@ -107,18 +106,19 @@ public class Controller {
     }
 
     public void updateDocumentByID(String collectionName, Map<String, Object> data, String id) throws FileNotFoundException {
+        CougarCollection c = getCollection(collectionName);
+        c.getIndex().remove(UUID.fromString(id));
+
         deleteDocument(collectionName, id);
-        if(getCollection(collectionName).putData(data, id)){
+        if(c.putData(data, id)){
             writeMetadata();
         }
     }
 
 
     private CougarCollection getCollection(String collectionName) throws FileNotFoundException {
+
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
-        for(CougarCollection c : this.collections){
-            System.out.println(c.getCollectionName());
-        }
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
         }
@@ -129,10 +129,11 @@ public class Controller {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
 
-        int idBlock = collection.getIndexManager().getIDBlockByID(UUID.fromString(id));
+        int idBlock = collection.getIndex().get(UUID.fromString(id));
         if (idBlock >= collection.getBlocks().size())   throw new IndexOutOfBoundsException();
 
-        CollectionBlock block = collection.getBlockByID(idBlock);
+        CollectionBlock block = collection.getCollectionBlockByID(idBlock);
+        block.readData();
         Optional<Map<String, Object>> o = block.getDocumentByID(id);
         if (o.isPresent()) {
             return o.get();
@@ -153,13 +154,13 @@ public class Controller {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
 
-        int idBlock = collection.getIndexManager().getIDBlockByID(UUID.fromString(id));
+        int idBlock = collection.getIndex().get(UUID.fromString(id));
         if (idBlock >= collection.getBlocks().size())   throw new IndexOutOfBoundsException();
 
-        CollectionBlock block = collection.getBlockByID(idBlock);
+        CollectionBlock block = collection.getCollectionBlockByID(idBlock);
         block.readData();
         if(block.deleteDocumentById(id)){
-            collection.getIndexManager().deleteIndex(UUID.fromString(id));
+            collection.getIndex().remove(UUID.fromString(id));
             return;
         }
 
