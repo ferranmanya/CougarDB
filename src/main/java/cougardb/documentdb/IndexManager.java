@@ -5,7 +5,7 @@ import java.util.UUID;
 
 public class IndexManager {
 
-    private TreeMap<UUID, String> index;
+    private TreeMap<UUID, Integer> index;
     private String collectionName;
 
     public IndexManager(String collectionName){
@@ -14,20 +14,19 @@ public class IndexManager {
         this.collectionName = collectionName;
     }
 
-    public void addIndex(UUID id, String path){
-        index.put(id, path);
+    public void addIndex(UUID id, int idBlock){
+        index.put(id, idBlock);
     }
     public void deleteIndex(UUID id){
-        if(index.containsKey(id))
-            index.remove(id);
+        if(index.containsKey(id))   index.remove(id);
+
     }
-    public void modifyID(UUID id, String path){
+    public void updateID(UUID id, int idBlock){
         deleteIndex(id);
-        addIndex(id, path);
+        addIndex(id, idBlock);
     }
-    public String getPathByID(UUID id){
+    public int getIDBlockByID(UUID id){
         return this.index.get(id);
     }
-
 
 }

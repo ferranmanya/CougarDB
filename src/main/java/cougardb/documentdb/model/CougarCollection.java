@@ -53,6 +53,7 @@ public class CougarCollection {
         else{
             // UUID aux = UUID.randomUUID();
             data.put("id", final_id);
+            System.out.println(final_id);
         }
         readFileBlocks(false); // load block list into memory
         //TODO escriure sempre a l'última pàgina (opc. defragmentacio, repaginació whatevs)
@@ -64,20 +65,23 @@ public class CougarCollection {
                 CollectionBlock block = result.get();
                 block.readData();
                 block.putData(data);
+                int idBlock = block.getId();
+                indexManager.addIndex(final_id, idBlock);
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
                 blocks.add(block);
+                int idBlock = block.getId();
+                indexManager.addIndex(final_id, idBlock);
                 return true;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        String path = "./data/"+this.collectionName+"."+Integer.toString(this.currentId)+".cdb";
-        //index.put(final_id, path);
-        indexManager.addIndex(final_id, path);
+        //String path = "./data/"+this.collectionName+"."+Integer.toString(this.currentId)+".cdb";
+
 
         return false;
     }
@@ -90,6 +94,11 @@ public class CougarCollection {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public CollectionBlock getBlockByID(int id){
+        return getBlocks().get(id);
+
     }
 
     public double getMaxFileSize() {
