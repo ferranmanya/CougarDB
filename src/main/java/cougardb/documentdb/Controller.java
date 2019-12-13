@@ -63,6 +63,7 @@ public class Controller {
         synchronized (this) {
             if (this.collections.contains(newCollection))
                 throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
+            //newCollection.loadIndex();
             this.collections.add(newCollection);
             writeMetadata();
         }

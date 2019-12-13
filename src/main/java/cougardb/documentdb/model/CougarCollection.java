@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.io.*;
 
-@JsonIgnoreProperties(value = { "mapper", "blocks" })
+@JsonIgnoreProperties(value = { "mapper", "blocks", "indexManager", "index" })
 public class CougarCollection {
 
     private String collectionName;
@@ -17,7 +17,8 @@ public class CougarCollection {
     private double maxFileSize; // kb
     private int currentId;
     private ObjectMapper mapper = new ObjectMapper();
-    private TreeMap<UUID, Integer> index = new TreeMap<>();
+    //private TreeMap<UUID, Integer> index = new TreeMap<>();
+    private IndexManager indexManager;
 
     public CougarCollection(){}
 
@@ -26,7 +27,30 @@ public class CougarCollection {
         this.creationDate = new Date();
         this.currentId = 0;
         this.maxFileSize = 1.;
+        loadIndex();
+        //this.indexManager = new IndexManager(this.collectionName);
         //this.index = new TreeMap<>();
+    }
+
+    public void loadIndex(){
+        String path = "./index/"+this.collectionName;
+        File file = new File(path);
+        if(file.exists() && !file.isDirectory()){
+
+            try {
+                FileInputStream fin = new FileInputStream(path);
+                ObjectInputStream in = new ObjectInputStream(fin);
+
+                this.indexManager = (IndexManager) in.readObject();
+
+
+            } catch(IOException | ClassNotFoundException e){
+                e.printStackTrace();
+            }
+
+        }else{
+            this.indexManager = new IndexManager(this.collectionName);
+        }
     }
 
     public void readFileBlocks(boolean readData){
@@ -63,14 +87,14 @@ public class CougarCollection {
                 block.putData(data);
                 System.out.println(final_id);
                 System.out.println(block.getId());
-                this.index.put(final_id, block.getId());
+                this.indexManager.getIndex().put(final_id, block.getId());
                 //getIndexManager().addIndex(final_id, block.getId());
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
                 blocks.add(block);
-                this.index.put(final_id, block.getId());
+                this.indexManager.getIndex().put(final_id, block.getId());
                 //getIndexManager().addIndex(final_id, block.getId());
                 return true;
             }
@@ -95,7 +119,7 @@ public class CougarCollection {
     }
 
     public TreeMap<UUID, Integer> getIndex(){
-        return this.index;
+        return this.indexManager.getIndex();
     }
 
     public double getMaxFileSize() {
