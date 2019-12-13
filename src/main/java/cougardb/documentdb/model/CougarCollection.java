@@ -3,6 +3,7 @@ package cougardb.documentdb.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
@@ -27,30 +28,9 @@ public class CougarCollection {
         this.creationDate = new Date();
         this.currentId = 0;
         this.maxFileSize = 1.;
-        loadIndex();
+        this.indexManager = new IndexManager(this.collectionName);
         //this.indexManager = new IndexManager(this.collectionName);
         //this.index = new TreeMap<>();
-    }
-
-    public void loadIndex(){
-        String path = "./index/"+this.collectionName;
-        File file = new File(path);
-        if(file.exists() && !file.isDirectory()){
-
-            try {
-                FileInputStream fin = new FileInputStream(path);
-                ObjectInputStream in = new ObjectInputStream(fin);
-
-                this.indexManager = (IndexManager) in.readObject();
-
-
-            } catch(IOException | ClassNotFoundException e){
-                e.printStackTrace();
-            }
-
-        }else{
-            this.indexManager = new IndexManager(this.collectionName);
-        }
     }
 
     public void readFileBlocks(boolean readData){

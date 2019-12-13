@@ -20,23 +20,4 @@ public class IndexManager implements Serializable {
         return index;
     }
 
-    @PreDestroy
-    public void save(){
-
-        String path = "./index/"+this.collectionName;
-
-        try {
-            FileOutputStream file = new FileOutputStream(path);
-            ObjectOutputStream out = new ObjectOutputStream(file);
-
-            out.writeObject(this);
-            out.close();
-            file.close();
-
-        }catch(FileNotFoundException e){
-            e.printStackTrace();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-    }
 }
