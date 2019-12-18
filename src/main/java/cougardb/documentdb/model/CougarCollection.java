@@ -7,6 +7,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @JsonIgnoreProperties(value = { "mapper", "blocks" })
 public class CougarCollection {
@@ -17,8 +22,15 @@ public class CougarCollection {
     private double maxFileSize; // kb
     private int currentId;
     private ObjectMapper mapper = new ObjectMapper();
+    private Map<Integer, ReadWriteLock> blockLocks = new HashMap<Integer, ReadWriteLock>();
 
     public CougarCollection(){}
+
+    public Lock getReadLock(CollectionBlock block){
+        if(block.getId() == this.currentId) {
+            return (Lock) this.blockLocks.get(currentId).readLock();
+        } else return (Lock) new ReentrantReadWriteLock();
+    }
 
     public CougarCollection(String collectionName) {
         this.collectionName = collectionName;
@@ -27,18 +39,22 @@ public class CougarCollection {
         this.maxFileSize = 1.;
     }
 
-    public void readFileBlocks(boolean readData){
+    public void readFileBlocks(boolean readData) {
         this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
             if(readData){
-                block.readData();
+                if(i == currentId) {
+                    blockLocks.get(currentId).readLock().lock();
+                    block.readData();
+                    blockLocks.get(currentId).readLock().unlock();
+                }
             }
             blocks.add(block);
         }
     }
 
-    public boolean putData(Map<String, Object> data, String id){
+    public boolean putData(Map<String, Object> data, String id)  {
         if(id.length() != 0){
             data.put("id", id);
         }
@@ -50,18 +66,25 @@ public class CougarCollection {
         try {
             String json = this.mapper.writeValueAsString(data); // data to formatted json string
             final int dataLength = json.getBytes(StandardCharsets.UTF_8).length; // calculate the length of data
-            Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
-            if(result.isPresent()){ // in case there is a block with enough available space, we insert it there
-                CollectionBlock block = result.get();
-                block.readData();
-                block.putData(data);
+            CollectionBlock lastBlock = this.blocks.get(currentId);
+            //Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
+            if(lastBlock.getFile().length() + dataLength < maxFileSize*1024){ // in case the last block has enough available space, we insert it there
+                this.getReadLock(lastBlock).lock();
+                lastBlock.readData();
+                this.getReadLock(lastBlock).unlock();
+                this.blockLocks.get(currentId).writeLock().lock();
+                lastBlock.putData(data);
+                this.blockLocks.get(currentId).writeLock().unlock();
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
                 block.putData(data);
-                blocks.add(block);
-                return true;
+                synchronized (this) {
+                    blocks.add(block);
+                    this.blockLocks.put(currentId, (ReadWriteLock) new ReentrantReadWriteLock());
+                }
             }
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }
