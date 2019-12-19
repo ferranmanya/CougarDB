@@ -67,6 +67,7 @@ public class Controller {
                 throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
             this.collections.add(newCollection);
             writeMetadata();
+            readMetadata();
         }
     }
 

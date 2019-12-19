@@ -160,8 +160,6 @@ public class CougarCollection {
 
     public void loadMap(){
         this.indexManager = new IndexManager(collectionName);
-        System.out.println(collectionName);
-        this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
             if(block.reloadData()!=null ) {
@@ -171,6 +169,5 @@ public class CougarCollection {
                 }
             }
         }
-        System.out.println(indexManager.getIndex().size());
     }
 }
