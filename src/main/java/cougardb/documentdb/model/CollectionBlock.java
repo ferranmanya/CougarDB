@@ -133,4 +133,17 @@ public class CollectionBlock {
         return false;
     }
 
+    public List<Map<String, Object>> reloadData(){
+        try {
+            if(this.file.exists()){
+                byte[] jsonData = Files.readAllBytes(Paths.get(this.file.getPath()));
+                Map<String, Object> map = this.mapper.readValue(jsonData, new TypeReference<Map<String, Object>>() {});
+                this.data = (List<Map<String, Object>>)map.get("data");
+                return data;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return  null;
+    }
 }
