@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @JsonIgnoreProperties(value = { "mapper", "file" })
 public class CollectionBlock {
@@ -31,7 +33,8 @@ public class CollectionBlock {
         this.file = new File("./data/"+collectionName+"."+id+".cdb");
     }
 
-    public void readData(){
+    public void readData(ReentrantReadWriteLock lock){
+        lock.readLock().lock();
         try {
             if(this.file.exists()){
                 byte[] jsonData = Files.readAllBytes(Paths.get(this.file.getPath()));
@@ -40,16 +43,20 @@ public class CollectionBlock {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
-    public void putData(Map<String, Object> json){
-        // TODO sincronitzat, map de <FILE, lock> de la pàgina
+    public void putData(Map<String, Object> json, ReentrantReadWriteLock lock){
+        lock.writeLock().lock();
         try {
             this.data.add(json);
             this.mapper.writeValue(this.file, this);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
