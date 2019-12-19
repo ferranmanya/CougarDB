@@ -7,6 +7,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @JsonIgnoreProperties(value = { "mapper", "blocks" })
 public class CougarCollection {
@@ -17,8 +22,18 @@ public class CougarCollection {
     private double maxFileSize; // kb
     private int currentId;
     private ObjectMapper mapper = new ObjectMapper();
+    private Map<Integer, ReentrantReadWriteLock> blockLocks = new HashMap<Integer, ReentrantReadWriteLock>();
 
     public CougarCollection(){}
+
+    public ReentrantReadWriteLock getLock(CollectionBlock block){
+        if(this.blockLocks.containsKey(block.getId())) {
+            return this.blockLocks.get(block.getId());
+        } else {
+            this.blockLocks.put(block.getId(), new ReentrantReadWriteLock());
+            return getLock(block);
+        }
+    }
 
     public CougarCollection(String collectionName) {
         this.collectionName = collectionName;
@@ -27,18 +42,18 @@ public class CougarCollection {
         this.maxFileSize = 1.;
     }
 
-    public void readFileBlocks(boolean readData){
+    public void readFileBlocks(boolean readData) {
         this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
             if(readData){
-                block.readData();
+                block.readData(getLock(block));
             }
             blocks.add(block);
         }
     }
 
-    public boolean putData(Map<String, Object> data, String id){
+    public boolean putData(Map<String, Object> data, String id)  {
         if(id.length() != 0){
             data.put("id", id);
         }
@@ -46,22 +61,23 @@ public class CougarCollection {
             data.put("id", UUID.randomUUID());
         }
         readFileBlocks(false); // load block list into memory
-        //TODO escriure sempre a l'última pàgina (opc. defragmentacio, repaginació whatevs)
         try {
             String json = this.mapper.writeValueAsString(data); // data to formatted json string
             final int dataLength = json.getBytes(StandardCharsets.UTF_8).length; // calculate the length of data
             Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
             if(result.isPresent()){ // in case there is a block with enough available space, we insert it there
                 CollectionBlock block = result.get();
-                block.readData();
-                block.putData(data);
+                ReentrantReadWriteLock lock = getLock(block);
+                block.readData(lock);
+                block.putData(data, lock);
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
-                block.putData(data);
+                block.putData(data, getLock(block));
                 blocks.add(block);
-                return true;
+                this.blockLocks.put(currentId, new ReentrantReadWriteLock());
             }
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }

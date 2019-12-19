@@ -19,7 +19,7 @@ public class Controller {
     private static final String METADATA = "metadata.json";
     private ObjectMapper mapper;
     private static Controller instance = null;
-    private List<CougarCollection> collections; // TODO ajustar sincronització ó llista concurrent
+    private List<CougarCollection> collections;
 
     protected Controller() {
         this.mapper = new ObjectMapper();
@@ -53,9 +53,9 @@ public class Controller {
     private synchronized List<CougarCollection> readMetadata(){
         try {
             byte[] jsonData = Files.readAllBytes(Paths.get(METADATA));
-            return this.mapper.readValue(jsonData, new TypeReference<List<CougarCollection>>(){});
+            return Collections.synchronizedList(this.mapper.readValue(jsonData, new TypeReference<List<CougarCollection>>(){}));
         } catch (IOException e) {
-            return new ArrayList<CougarCollection>();
+            return Collections.synchronizedList(new ArrayList<CougarCollection>());
         }
     }
 
@@ -68,8 +68,7 @@ public class Controller {
         }
     }
 
-    public void dropCollection(String collectionName) throws FileNotFoundException
-    {
+    public void dropCollection(String collectionName) throws FileNotFoundException {
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
             throw new FileNotFoundException(collectionName + " does not exist.");
@@ -125,7 +124,7 @@ public class Controller {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
         for (CollectionBlock block : collection.getBlocks()) {
-            block.readData();
+            block.readData(collection.getLock(block));
             Optional<Map<String, Object>> o = block.getDocumentByID(id);
             if (o.isPresent())
                 return o.get();
@@ -137,7 +136,7 @@ public class Controller {
         CougarCollection collection = getCollection(collectionName);
         collection.readFileBlocks(false);
         for (CollectionBlock block : collection.getBlocks()) {
-            block.readData();
+            block.readData(collection.getLock(block));
             if(block.deleteDocumentById(id)){
                 return;
             }
