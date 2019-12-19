@@ -29,8 +29,14 @@ public class APIController {
 
         if(collectionData.containsKey("name")){
             // TODO passar string correcta com a nom
-            name = (String)collectionData.get("name");
-            response.put("collection", name);
+            if(collectionData.get("name") instanceof String) {
+                name = (String) collectionData.get("name");
+                response.put("collection", name);
+            }
+            else{
+                response.put("error", "The field name must be of type string");
+                return new ResponseEntity<Map<String,Object>>(response, HttpStatus.BAD_REQUEST);
+            }
         }else{
             // TODO response amb classe personalitzada
             response.put("error", "The name field is required");

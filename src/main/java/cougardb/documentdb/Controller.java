@@ -91,7 +91,8 @@ public class Controller {
             // package concurrent --> write vs read
             json = this.mapper.writeValueAsString(collection.getBlocks());
             List<Map<String, Object>> blockList = this.mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            collectionMap.put("blocks", blockList);
+            ArrayList data = (ArrayList) blockList.get(0).get("data");
+            collectionMap.put("data", data);
             return collectionMap;
         } catch (IOException e) {
             e.printStackTrace();
