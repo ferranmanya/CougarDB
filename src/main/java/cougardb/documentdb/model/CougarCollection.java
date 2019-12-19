@@ -27,7 +27,7 @@ public class CougarCollection {
         this.maxFileSize = 1.;
     }
 
-    public void readFileBlocks(boolean readData){
+    public synchronized void readFileBlocks(boolean readData){
         this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
@@ -52,14 +52,18 @@ public class CougarCollection {
             final int dataLength = json.getBytes(StandardCharsets.UTF_8).length; // calculate the length of data
             Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
             if(result.isPresent()){ // in case there is a block with enough available space, we insert it there
+
                 CollectionBlock block = result.get();
                 block.readData();
                 block.putData(data);
+
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
+
                 block.putData(data);
                 blocks.add(block);
+
                 return true;
             }
         } catch (IOException e) {
