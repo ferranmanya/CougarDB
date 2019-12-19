@@ -28,7 +28,7 @@ public class CollectionBlock {
         this.collectionName = collectionName;
         this.creationDate = new Date();
         this.maxFileSize = maxFileSize;
-        this.file = new File(collectionName+"."+id+".cdb");
+        this.file = new File("./data/"+collectionName+"."+id+".cdb");
     }
 
     public void readData(){
