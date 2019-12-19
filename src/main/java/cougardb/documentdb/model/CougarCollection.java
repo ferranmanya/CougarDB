@@ -3,11 +3,15 @@ package cougardb.documentdb.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.io.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @JsonIgnoreProperties(value = { "mapper", "blocks", "indexManager", "index" })
 public class CougarCollection {
@@ -18,10 +22,20 @@ public class CougarCollection {
     private double maxFileSize; // kb
     private int currentId;
     private ObjectMapper mapper = new ObjectMapper();
+    private Map<Integer, ReentrantReadWriteLock> blockLocks = new HashMap<Integer, ReentrantReadWriteLock>();
     //private TreeMap<UUID, Integer> index = new TreeMap<>();
     private IndexManager indexManager;
 
     public CougarCollection(){}
+
+    public ReentrantReadWriteLock getLock(CollectionBlock block){
+        if(this.blockLocks.containsKey(block.getId())) {
+            return this.blockLocks.get(block.getId());
+        } else {
+            this.blockLocks.put(block.getId(), new ReentrantReadWriteLock());
+            return getLock(block);
+        }
+    }
 
     public CougarCollection(String collectionName) {
         this.collectionName = collectionName;
@@ -33,49 +47,39 @@ public class CougarCollection {
         //this.index = new TreeMap<>();
     }
 
-    public void readFileBlocks(boolean readData){
+    public void readFileBlocks(boolean readData) {
         this.blocks = new ArrayList<>();
         for (int i = 0; i <= this.currentId; i++) {
             CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
             if(readData){
-                block.readData();
+                block.readData(getLock(block));
             }
             blocks.add(block);
         }
     }
 
     public boolean putData(Map<String, Object> data, String id){
-        UUID final_id = UUID.randomUUID();
-
-        if(id.length() != 0){
-            final_id = UUID.fromString(id);
-            data.put("id", id);
-            //System.out.println(id);
-        }
-        else{
-            data.put("id", final_id);
-        }
+        UUID final_id = (id.length() > 0)? UUID.fromString(id) : UUID.randomUUID();
+        data.put("id", final_id);
         readFileBlocks(false); // load block list into memory
-        //TODO escriure sempre a l'última pàgina (opc. defragmentacio, repaginació whatevs)
         try {
             String json = this.mapper.writeValueAsString(data); // data to formatted json string
             final int dataLength = json.getBytes(StandardCharsets.UTF_8).length; // calculate the length of data
             Optional<CollectionBlock> result = blocks.stream().filter(block -> block.getFile().length() + dataLength < maxFileSize*1024).findFirst();
             if(result.isPresent()){ // in case there is a block with enough available space, we insert it there
                 CollectionBlock block = result.get();
-                block.readData();
-                block.putData(data);
-                System.out.println(final_id);
-                System.out.println(block.getId());
+                ReentrantReadWriteLock lock = getLock(block);
+                block.readData(lock);
+                block.putData(data, lock);
                 this.indexManager.getIndex().put(final_id, block.getId());
                 //getIndexManager().addIndex(final_id, block.getId());
             }else{ // otherwise, we create a new block
                 this.currentId++;
                 CollectionBlock block = new CollectionBlock(this.collectionName, this.currentId, this.maxFileSize);
-                block.putData(data);
+                block.putData(data, getLock(block));
                 blocks.add(block);
-                this.indexManager.getIndex().put(final_id, block.getId());
-                //getIndexManager().addIndex(final_id, block.getId());
+                this.blockLocks.put(currentId, new ReentrantReadWriteLock());
+                this.indexManager.getIndex().put(final_id, block.getId());//getIndexManager().addIndex(final_id, block.getId());
                 return true;
             }
         } catch (IOException e) {
