@@ -20,7 +20,7 @@ public class Controller {
     private static final String METADATA = "metadata.json";
     private ObjectMapper mapper;
     private static Controller instance = null;
-    private List<CougarCollection> collections; // TODO ajustar sincronització ó llista concurrent
+    private final List<CougarCollection> collections;
 
     protected Controller() {
         this.mapper = new ObjectMapper();
@@ -62,7 +62,7 @@ public class Controller {
     }
 
     private void writeCollection(CougarCollection newCollection) throws CollectionAlreadyExistsException {
-        synchronized (this) {
+        synchronized (this.collections) {
             if (this.collections.contains(newCollection))
                 throw new CollectionAlreadyExistsException("Collection " + newCollection.getCollectionName() + " already exists.");
             //newCollection.loadIndex();
@@ -71,7 +71,7 @@ public class Controller {
         }
     }
 
-    public void dropCollection(String collectionName) throws FileNotFoundException
+    public synchronized void dropCollection(String collectionName) throws FileNotFoundException
     {
         Optional<CougarCollection> result = this.collections.stream().filter(collection -> collection.getCollectionName().equals(collectionName)).findFirst();
         if (result.isEmpty()){
@@ -91,7 +91,6 @@ public class Controller {
             Map<String, Object> collectionMap = this.mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
             collection.readFileBlocks(true);
             //TODO retornar tots els documents seguits, no en blocks
-            // package concurrent --> write vs read
             json = this.mapper.writeValueAsString(collection.getBlocks());
             List<Map<String, Object>> blockList = this.mapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
             collectionMap.put("blocks", blockList);
@@ -101,6 +100,21 @@ public class Controller {
             return null;
         }
     }
+
+    public List<Map<String, Object>> searchData(String collectionName, Map<String, Object> query) throws FileNotFoundException {
+        CougarCollection collection = getCollection(collectionName);
+        try {
+            collection.readFileBlocks(true);
+            String blocks = this.mapper.writeValueAsString(collection.getBlocks());
+            String queryJson = this.mapper.writeValueAsString(query);
+            List<Map<String, Object>> blockList = new Query(queryJson, blocks).getResults();
+            return blockList;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     public void putCollectionData(String collectionName, Map<String, Object> data) throws FileNotFoundException{
         if(getCollection(collectionName).putData(data, "")){
