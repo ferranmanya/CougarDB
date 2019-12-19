@@ -153,4 +153,19 @@ public class CougarCollection {
     public int hashCode() {
         return collectionName.hashCode();
     }
+
+    public void loadMap(){
+        this.indexManager = new IndexManager(collectionName);
+        this.blocks = new ArrayList<>();
+        for (int i = 0; i <= this.currentId; i++) {
+            CollectionBlock block = new CollectionBlock(this.collectionName, i, this.maxFileSize);
+            if(block.reloadData()!=null ) {
+                for(i=0; i < block.reloadData().size(); i++) {
+                    UUID reload = UUID.fromString((String) block.reloadData().get(i).get("id"));
+                    indexManager.getIndex().put(reload, block.getId());
+                }
+            }
+        }
+        System.out.println(indexManager.getIndex().size());
+    }
 }

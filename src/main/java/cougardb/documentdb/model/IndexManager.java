@@ -19,5 +19,4 @@ public class IndexManager implements Serializable {
     public TreeMap<UUID, Integer> getIndex() {
         return index;
     }
-
 }

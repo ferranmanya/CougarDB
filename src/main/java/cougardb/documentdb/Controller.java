@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import cougardb.documentdb.exceptions.CollectionAlreadyExistsException;
 import cougardb.documentdb.model.CollectionBlock;
 import cougardb.documentdb.model.CougarCollection;
+import cougardb.documentdb.model.IndexManager;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -24,6 +25,7 @@ public class Controller {
     protected Controller() {
         this.mapper = new ObjectMapper();
         this.collections = readMetadata();
+        this.loadCollectionMap();
     }
 
     public static Controller getInstance() {
@@ -178,4 +180,12 @@ public class Controller {
         throw new FileNotFoundException("Document not found");
     }
 
+
+    public void loadCollectionMap(){
+        if (collections.size() > 0) {
+            for (CougarCollection collection : collections) {
+                collection.loadMap();
+            }
+        }
+    }
 }
